@@ -4,56 +4,75 @@
 
 ## 📋 Overview
 
-Order processing microservice for the monitoring platform.
+Order processing microservice. Handles order creation, tracking, and aggregated order details with shipment info.
 
 ## 🏗️ Architecture
 
 ```
 order-service/
-├── cmd/
-│   └── main.go              # Entry point, graceful shutdown
-├── config/
-│   └── config.go            # Environment-based configuration
-├── db/migrations/
-│   └── sql/                  # Flyway SQL migrations
+├── cmd/main.go
+├── config/config.go
+├── db/migrations/sql/
 ├── internal/
 │   ├── core/
-│   │   ├── database.go      # PostgreSQL connection pool (pgx)
-│   │   └── domain/          # Domain models
-│   ├── logic/v1/
-│   │   ├── service.go       # Business logic layer
-│   │   └── errors.go        # Domain errors
-│   └── web/v1/
-│       └── handler.go       # HTTP handlers (Gin)
+│   │   ├── database.go
+│   │   └── domain/
+│   ├── logic/v1/service.go
+│   └── web/v1/handler.go
 ├── middleware/
-│   ├── logging.go           # Request logging
-│   ├── prometheus.go        # Metrics
-│   └── tracing.go           # OpenTelemetry
 └── Dockerfile
 ```
 
 ## 🔌 API Endpoints
 
-GET /api/v1/orders, POST /api/v1/orders, GET /api/v1/orders/:id
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/v1/orders` | List user orders |
+| `GET` | `/api/v1/orders/:id` | Get order by ID |
+| `GET` | `/api/v1/orders/:id/details` | **Aggregated** order + shipment |
+| `POST` | `/api/v1/orders` | Create new order |
+
+## 📐 3-Layer Architecture
+
+| Layer | Location | Responsibility |
+|-------|----------|----------------|
+| **Web** | `internal/web/v1/handler.go` | HTTP, validation, **aggregation** |
+| **Logic** | `internal/logic/v1/service.go` | Business rules (❌ NO SQL) |
+| **Core** | `internal/core/` | Domain models, repositories |
+
+**Aggregation:** `/orders/:id/details` combines order + shipment (HTTP call to shipping-service).
+
+## 🗄️ Database
+
+| Component | Value |
+|-----------|-------|
+| **Cluster** | transaction-db (shared with cart-service) |
+| **PostgreSQL** | 18 |
+| **HA** | 3 instances (1 primary + 2 replicas) |
+| **Pooler** | PgCat HA (2 replicas) |
+| **Endpoint** | `pgcat.cart.svc.cluster.local:5432` |
+| **Database Name** | `order` (separate from `cart` database) |
+| **Replication** | **Synchronous** (zero data loss) |
+
+**Shared Cluster:** Same PostgreSQL cluster as cart-service, different database.
+
+## 🚀 Graceful Shutdown
+
+**VictoriaMetrics Pattern:**
+1. `/ready` → 503 when shutting down
+2. Drain delay (5s)
+3. Sequential: HTTP → Database → Tracer
 
 ## 🔧 Tech Stack
 
 | Component | Technology |
 |-----------|------------|
-| **Framework** | Gin v1.11 |
-| **Database** | PostgreSQL via pgx/v5 |
-| **Logging** | Zerolog (from `github.com/duynhne/pkg`) |
-| **Tracing** | OpenTelemetry with OTLP exporter |
-| **Metrics** | Prometheus client |
+| **Framework** | Gin |
+| **Database** | PostgreSQL 18 via pgx/v5 |
+| **Tracing** | OpenTelemetry |
 
 ## 🛠️ Development
 
 ```bash
-go mod download
-go test -v ./...
-go build -o order-service ./cmd/main.go
+go mod download && go test ./... && go build ./cmd/main.go
 ```
-
-## 🚀 CI/CD
-
-Uses reusable GitHub Actions from [shared-workflows](https://github.com/duyhenryer/shared-workflows)
