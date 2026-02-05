@@ -74,4 +74,4 @@ require (
 )
 
 // For local development with pkg
-replace github.com/duynhne/pkg => ../pkg
+// replace github.com/duynhne/pkg => ../pkg
