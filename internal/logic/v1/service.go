@@ -3,7 +3,6 @@ package v1
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/duynhne/order-service/internal/core/domain"
 	"github.com/duynhne/order-service/middleware"
@@ -90,7 +89,7 @@ func (s *OrderService) CreateOrder(ctx context.Context, req domain.CreateOrderRe
 
 		productName := item.ProductName
 		if productName == "" {
-			productName = fmt.Sprintf("Product %s", item.ProductID)
+			productName = "Product " + item.ProductID
 		}
 
 		enrichedItems[i] = domain.OrderItem{
@@ -118,7 +117,7 @@ func (s *OrderService) CreateOrder(ctx context.Context, req domain.CreateOrderRe
 		span.RecordError(err)
 		return nil, err
 	}
-	defer tx.Rollback(ctx) // Rollback if not committed
+	defer func() { _ = tx.Rollback(ctx) }() // Rollback if not committed
 
 	// Create order with transaction
 	err = s.orderRepo.CreateWithTx(ctx, tx, order)
