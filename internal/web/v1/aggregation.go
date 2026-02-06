@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -51,10 +52,15 @@ func NewShippingClient(baseURL string) *ShippingClient {
 }
 
 // GetShipmentByOrderID fetches shipment info for an order
-func (c *ShippingClient) GetShipmentByOrderID(orderID string) (*Shipment, error) {
+func (c *ShippingClient) GetShipmentByOrderID(ctx context.Context, orderID string) (*Shipment, error) {
 	url := fmt.Sprintf("%s/api/v1/shipping/orders/%s", c.baseURL, orderID)
 
-	resp, err := c.httpClient.Get(url)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("create shipping request: %w", err)
+	}
+
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("shipping service call failed: %w", err)
 	}
@@ -123,7 +129,7 @@ func GetOrderDetails(c *gin.Context) {
 	// Try to get shipment (non-blocking - order may not have shipment yet)
 	var shipment *Shipment
 	if shippingClient != nil {
-		shipment, err = shippingClient.GetShipmentByOrderID(orderID)
+		shipment, err = shippingClient.GetShipmentByOrderID(ctx, orderID)
 		if err != nil {
 			// Log but don't fail - shipment is optional
 			zapLogger.Warn("Could not fetch shipment", zap.Error(err), zap.String("order_id", orderID))

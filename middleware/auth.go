@@ -1,7 +1,9 @@
 package middleware
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -36,7 +38,7 @@ func NewAuthClient(baseURL string) *AuthClient {
 
 // GetMe retrieves user info from auth service using the token
 func (c *AuthClient) GetMe(token string) (*AuthUser, error) {
-	req, err := http.NewRequest("GET", c.baseURL+"/api/v1/auth/me", nil)
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, c.baseURL+"/api/v1/auth/me", nil)
 	if err != nil {
 		return nil, fmt.Errorf("create request: %w", err)
 	}
@@ -49,7 +51,7 @@ func (c *AuthClient) GetMe(token string) (*AuthUser, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode == http.StatusUnauthorized {
-		return nil, fmt.Errorf("invalid or expired token")
+		return nil, errors.New("invalid or expired token")
 	}
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
