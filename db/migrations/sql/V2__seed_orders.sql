@@ -60,3 +60,10 @@ SELECT
     (SELECT SUM(total) FROM orders) as total_revenue
 FROM orders
 LIMIT 1;
+
+-- =============================================================================
+-- FIX SEQUENCES
+-- =============================================================================
+-- Reset sequences to max id to prevent duplicate key errors on new inserts
+SELECT setval('orders_id_seq', (SELECT MAX(id) FROM orders));
+SELECT setval('order_items_id_seq', (SELECT MAX(id) FROM order_items));
