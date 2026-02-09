@@ -20,7 +20,9 @@ func NewPostgresTransactionManager(pool *pgxpool.Pool) *PostgresTransactionManag
 
 // Begin starts a new database transaction
 func (tm *PostgresTransactionManager) Begin(ctx context.Context) (domain.Transaction, error) {
-	tx, err := tm.pool.Begin(ctx)
+	// Explicitly request a ReadWrite transaction to ensure we target the primary node
+	// in the PgCat cluster. Default Begin() might be routed to replicas if not configured correctly.
+	tx, err := tm.pool.BeginTx(ctx, pgx.TxOptions{AccessMode: pgx.ReadWrite})
 	if err != nil {
 		return nil, err
 	}
