@@ -20,6 +20,8 @@ func NewPostgresTransactionManager(pool *pgxpool.Pool) *PostgresTransactionManag
 
 // Begin starts a new database transaction
 func (tm *PostgresTransactionManager) Begin(ctx context.Context) (domain.Transaction, error) {
+	// Revert to standard Begin() to leverage PgCat routing.
+	// Explicit ReadWrite mode can cause 0A000 error on replicas if not handled correctly by the pooler.
 	tx, err := tm.pool.Begin(ctx)
 	if err != nil {
 		return nil, err
