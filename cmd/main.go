@@ -119,13 +119,14 @@ func setupServer(cfg *config.Config, logger *zap.Logger, authClient *middleware.
 	})
 	r.GET("/metrics", gin.WrapH(promhttp.Handler()))
 
-	apiV1 := r.Group("/api/v1")
-	apiV1.Use(middleware.AuthMiddleware(authClient, logger, cfg.AuthAllowUnauthenticatedFallback))
+	// Order v1 routes — all private (JWT required). Variant A edge naming.
+	privateOrders := r.Group("/order/v1/private")
+	privateOrders.Use(middleware.AuthMiddleware(authClient, logger, cfg.AuthAllowUnauthenticatedFallback))
 	{
-		apiV1.GET("/orders", v1.ListOrders)
-		apiV1.GET("/orders/:id", v1.GetOrder)
-		apiV1.GET("/orders/:id/details", v1.GetOrderDetails)
-		apiV1.POST("/orders", v1.CreateOrder)
+		privateOrders.GET("/orders", v1.ListOrders)
+		privateOrders.GET("/orders/:id", v1.GetOrder)
+		privateOrders.GET("/orders/:id/details", v1.GetOrderDetails)
+		privateOrders.POST("/orders", v1.CreateOrder)
 	}
 
 	return &http.Server{

@@ -143,28 +143,15 @@ go build ./... && go test ./... && golangci-lint run --timeout=10m
 
 ## 🔌 API Reference
 
-### Cluster paths (what this service mounts)
+All order routes are **private** — JWT middleware is applied at the `/order/v1/private` router group.
 
-All order routes are **private** — the service applies JWT middleware at the `/api/v1` group level.
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/order/v1/private/orders` | List user orders |
+| `GET` | `/order/v1/private/orders/:id` | Get order by ID |
+| `GET` | `/order/v1/private/orders/:id/details` | **Aggregated** order + shipment |
+| `POST` | `/order/v1/private/orders` | Create new order |
 
-| Method | Cluster path | Audience | Description |
-|--------|--------------|----------|-------------|
-| `GET` | `/api/v1/orders` | private | List user orders |
-| `GET` | `/api/v1/orders/:id` | private | Get order by ID |
-| `GET` | `/api/v1/orders/:id/details` | private | **Aggregated** order + shipment |
-| `POST` | `/api/v1/orders` | private | Create new order |
+The order-details aggregation calls `shipping-service` internal endpoint via in-cluster DNS — `http://shipping.shipping.svc.cluster.local:8080/shipping/v1/internal/orders/:orderId`. Order creation also calls `cart-service` to clear the cart: `http://cart.cart.svc.cluster.local:8080/cart/v1/private/cart` (forwards the user's `Authorization` header).
 
-### Edge paths (what the browser sends)
-
-Kong in the `order` namespace rewrites `/order/v1/private/orders/...` → `/api/v1/orders/...`.
-
-| Edge path (browser) | → Cluster path |
-|---------------------|----------------|
-| `GET gateway.duynhne.me/order/v1/private/orders` | `GET /api/v1/orders` |
-| `GET gateway.duynhne.me/order/v1/private/orders/:id` | `GET /api/v1/orders/:id` |
-| `GET gateway.duynhne.me/order/v1/private/orders/:id/details` | `GET /api/v1/orders/:id/details` |
-| `POST gateway.duynhne.me/order/v1/private/orders` | `POST /api/v1/orders` |
-
-The aggregation endpoint calls `shipping-service` via in-cluster DNS (`http://shipping.shipping.svc.cluster.local:8080/api/v1/shipping/orders/:orderId`) — that internal route is **not** on the gateway.
-
-Convention + rewrite rule: [`homelab/docs/api/api-naming-convention.md`](https://github.com/duynhlab/homelab/blob/main/docs/api/api-naming-convention.md).
+Full convention + inventory: [`homelab/docs/api/api-naming-convention.md`](https://github.com/duynhlab/homelab/blob/main/docs/api/api-naming-convention.md).

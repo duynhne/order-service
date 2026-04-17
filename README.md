@@ -11,14 +11,14 @@ Order processing microservice for creating and tracking orders.
 
 ## API Endpoints
 
-> **Browser callers** hit `https://gateway.duynhne.me/order/v1/private/orders/…` (all routes private — JWT required); Kong rewrites to the cluster paths below. See [homelab naming convention](https://github.com/duynhlab/homelab/blob/main/docs/api/api-naming-convention.md).
+All routes follow Variant A naming and require JWT (audience = `private`). See [homelab naming convention](https://github.com/duynhlab/homelab/blob/main/docs/api/api-naming-convention.md).
 
-| Method | Cluster path | Edge path (via gateway) |
-|--------|--------------|-------------------------|
-| `GET` | `/api/v1/orders` | `/order/v1/private/orders` |
-| `GET` | `/api/v1/orders/:id` | `/order/v1/private/orders/:id` |
-| `GET` | `/api/v1/orders/:id/details` | `/order/v1/private/orders/:id/details` |
-| `POST` | `/api/v1/orders` | `/order/v1/private/orders` |
+| Method | Path | Note |
+|--------|------|------|
+| `GET` | `/order/v1/private/orders` | List user orders |
+| `GET` | `/order/v1/private/orders/:id` | Get order |
+| `GET` | `/order/v1/private/orders/:id/details` | Aggregated with shipment |
+| `POST` | `/order/v1/private/orders` | Create order; also calls cart-service to clear the cart |
 
 ## Tech Stack
 

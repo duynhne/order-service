@@ -53,7 +53,8 @@ func NewShippingClient(baseURL string) *ShippingClient {
 
 // GetShipmentByOrderID fetches shipment info for an order
 func (c *ShippingClient) GetShipmentByOrderID(ctx context.Context, orderID string) (*Shipment, error) {
-	url := fmt.Sprintf("%s/api/v1/shipping/orders/%s", c.baseURL, orderID)
+	// Internal shipping endpoint — not routed through Kong, reached via in-cluster DNS.
+	url := fmt.Sprintf("%s/shipping/v1/internal/orders/%s", c.baseURL, orderID)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
@@ -91,7 +92,7 @@ func SetShippingClient(client *ShippingClient) {
 	shippingClient = client
 }
 
-// GetOrderDetails handles GET /api/v1/orders/:id/details
+// GetOrderDetails handles GET /order/v1/private/orders/:id/details
 // Returns order with shipment info (aggregation endpoint)
 func GetOrderDetails(c *gin.Context) {
 	ctx, span := middleware.StartSpan(c.Request.Context(), "http.request", trace.WithAttributes(
