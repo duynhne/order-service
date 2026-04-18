@@ -143,9 +143,15 @@ go build ./... && go test ./... && golangci-lint run --timeout=10m
 
 ## 🔌 API Reference
 
+All order routes are **private** — JWT middleware is applied at the `/order/v1/private` router group.
+
 | Method | Path | Description |
 |--------|------|-------------|
-| `GET` | `/api/v1/orders` | List user orders |
-| `GET` | `/api/v1/orders/:id` | Get order by ID |
-| `GET` | `/api/v1/orders/:id/details` | **Aggregated** order + shipment |
-| `POST` | `/api/v1/orders` | Create new order |
+| `GET` | `/order/v1/private/orders` | List user orders |
+| `GET` | `/order/v1/private/orders/:id` | Get order by ID |
+| `GET` | `/order/v1/private/orders/:id/details` | **Aggregated** order + shipment |
+| `POST` | `/order/v1/private/orders` | Create new order |
+
+The order-details aggregation calls `shipping-service` internal endpoint via in-cluster DNS — `http://shipping.shipping.svc.cluster.local:8080/shipping/v1/internal/orders/:orderId`. Order creation also calls `cart-service` to clear the cart: `http://cart.cart.svc.cluster.local:8080/cart/v1/private/cart` (forwards the user's `Authorization` header).
+
+Full convention + inventory: [`homelab/docs/api/api-naming-convention.md`](https://github.com/duynhlab/homelab/blob/main/docs/api/api-naming-convention.md).

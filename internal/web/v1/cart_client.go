@@ -27,7 +27,8 @@ func NewCartClient(baseURL string) *CartClient {
 // ClearCart clears the authenticated user's cart by calling cart service.
 // It forwards the original Authorization header to preserve identity.
 func (c *CartClient) ClearCart(ctx context.Context, authHeader string) error {
-	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, c.baseURL+"/api/v1/cart", nil)
+	// Cart private endpoint — forwards caller's Authorization header for JWT validation.
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, c.baseURL+"/cart/v1/private/cart", nil)
 	if err != nil {
 		return fmt.Errorf("create request: %w", err)
 	}

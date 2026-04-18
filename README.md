@@ -11,12 +11,14 @@ Order processing microservice for creating and tracking orders.
 
 ## API Endpoints
 
-| Method | Path | Description |
-|--------|------|-------------|
-| `GET` | `/api/v1/orders` | List user orders |
-| `GET` | `/api/v1/orders/:id` | Get order by ID |
-| `GET` | `/api/v1/orders/:id/details` | Aggregated with shipment |
-| `POST` | `/api/v1/orders` | Create new order |
+All routes follow Variant A naming and require JWT (audience = `private`). See [homelab naming convention](https://github.com/duynhlab/homelab/blob/main/docs/api/api-naming-convention.md).
+
+| Method | Path | Note |
+|--------|------|------|
+| `GET` | `/order/v1/private/orders` | List user orders |
+| `GET` | `/order/v1/private/orders/:id` | Get order |
+| `GET` | `/order/v1/private/orders/:id/details` | Aggregated with shipment |
+| `POST` | `/order/v1/private/orders` | Create order; also calls cart-service to clear the cart |
 
 ## Tech Stack
 
